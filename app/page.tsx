@@ -1,113 +1,266 @@
-import Image from "next/image";
+"use client";
+import {useEffect, useState, createContext} from "react";
+import {SafeEventEmitterProvider, UserInfo} from "@web3auth/base";
 
-export default function Home() {
+import {ethers} from "ethers";
+import {CROWDFUNDING_CONTRACT_ABI} from "./constants";
+
+import {
+  GaslessOnboarding,
+  GaslessWalletConfig,
+  GaslessWalletInterface,
+  LoginConfig,
+} from "@gelatonetwork/gasless-onboarding";
+import {getChainConfig} from "./lib";
+import Home from "./components/Home";
+import Footer from "./components/Footer";
+import parseEther from "./lib/parseEther";
+
+export const web3AuthProviderContext = createContext("");
+export const smartWalletContext = createContext("");
+
+function App() {
+  const {target} = getChainConfig();
+
+  const [gelatoLogin, setGelatoLogin] = useState<
+    GaslessOnboarding | undefined
+  >();
+
+  const [web3AuthProvider, setWeb3AuthProvider] =
+    useState<SafeEventEmitterProvider | null>(null);
+  const [smartWallet, setSmartWallet] = useState<GaslessWalletInterface | null>(
+    null
+  );
+  const [crowdfundingContract, setCrowdfundingContract] =
+    useState<ethers.Contract | null>(null);
+  const [user, setUser] = useState<Partial<UserInfo> | null>(null);
+  const [wallet, setWallet] = useState<{
+    address: string;
+    balance: string;
+    chainId: number;
+  } | null>(null);
+  const [campaigns, setCampaigns] = useState<object[]>([]);
+  const [balance, setBalance] = useState<string>("0");
+  const createCampaign = async (
+    name: string,
+    description: string,
+    goal: string,
+    beneficiary: string
+  ): Promise<void> => {
+    console.log("Creating Campaignfrom App.tsx");
+    console.log(name, description, goal, beneficiary);
+    if (!crowdfundingContract) {
+      throw new Error("Crowdfunding Contract is not initiated");
+    }
+    let {data} = await crowdfundingContract.populateTransaction.createCampaign(
+      name,
+      description,
+      goal,
+      beneficiary
+    );
+    if (!data) {
+      throw new Error("Data is not initiated");
+    }
+    if (!smartWallet) {
+      throw new Error("Smart Wallet is not initiated");
+    }
+    try {
+      const {taskId} = await smartWallet.sponsorTransaction(target, data);
+      console.log("https://api.gelato.digital/tasks/status/" + taskId);
+      setTimeout(() => {
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      }, 5000); // 5000 milliseconds = 5 seconds
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  const withdrawFromCampaign = async (campaignId: string): Promise<void> => {
+    if (!crowdfundingContract) {
+      throw new Error("Crowdfunding Contract is not initiated");
+    }
+    let {data} = await crowdfundingContract.populateTransaction.withdrawFunds(
+      campaignId
+    );
+    if (!data) {
+      throw new Error("Data is not initiated");
+    }
+    if (!smartWallet) {
+      throw new Error("Smart Wallet is not initiated");
+    }
+    try {
+      const {taskId} = await smartWallet.sponsorTransaction(target, data);
+      console.log("https://api.gelato.digital/tasks/status/" + taskId);
+      setTimeout(() => {
+        // Ensure window is defined (i.e., code is running in the browser)
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      }, 5000); // 5000 milliseconds = 5 seconds
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const depositFunds = async (amount: number): Promise<void> => {
+    console.log("Depositing Funds from App.tsx");
+    console.log(amount);
+    if (!crowdfundingContract) {
+      throw new Error("Crowdfunding Contract is not initiated");
+    }
+
+    // Ensure smartWallet is initialized
+    if (!smartWallet) {
+      throw new Error("Smart Wallet is not initiated");
+    }
+
+    try {
+      const value = parseEther(amount.toString());
+      console.log(value);
+
+      let {data} =
+        await crowdfundingContract.populateTransaction.depositFunds();
+
+      // Ensure data is initialized
+      if (!data) {
+        throw new Error("Data is not initiated");
+      }
+
+      // Send the transaction through the smartWallet
+      const {taskId} = await smartWallet.sponsorTransaction(
+        target,
+        data,
+        value
+      );
+      console.log("https://api.gelato.digital/tasks/status/" + taskId);
+
+      setTimeout(() => {
+        // Reload the window after 5 seconds, ensure this code runs in the browser
+        if (typeof window !== "undefined") {
+          window.location.reload();
+        }
+      }, 5000); // 5000 milliseconds = 5 seconds
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const {apiKey, chainId, target, rpcUrl} = getChainConfig();
+
+        const smartWalletConfig: GaslessWalletConfig = {apiKey};
+        const loginConfig: LoginConfig = {
+          domains: [window.location.origin],
+          chain: {
+            id: chainId,
+            rpcUrl,
+          },
+          ui: {
+            theme: "dark",
+          },
+          openLogin: {
+            redirectUrl: `${window.location.origin}/?chainId=${chainId}`,
+          },
+        };
+        const gelatoLogin = new GaslessOnboarding(
+          loginConfig,
+          smartWalletConfig
+        );
+
+        await gelatoLogin.init();
+        setGelatoLogin(gelatoLogin);
+        const provider = gelatoLogin.getProvider();
+        if (provider) {
+          setWeb3AuthProvider(provider as any);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    init();
+  }, []);
+
+  useEffect(() => {
+    const init = async () => {
+      if (!gelatoLogin || !web3AuthProvider) {
+        return;
+      }
+
+      const web3Provider = new ethers.providers.Web3Provider(web3AuthProvider!);
+      const signer = web3Provider.getSigner();
+      setWallet({
+        address: await signer.getAddress(),
+        balance: (await signer.getBalance()).toString(),
+        chainId: await signer.getChainId(),
+      });
+      const user = await gelatoLogin.getUserInfo();
+      setUser(user);
+      const gelatoSmartWallet = gelatoLogin.getGaslessWallet();
+      setSmartWallet(gelatoSmartWallet);
+
+      const cfContract = new ethers.Contract(
+        target,
+        CROWDFUNDING_CONTRACT_ABI,
+        new ethers.providers.Web3Provider(web3AuthProvider!).getSigner()
+      );
+      setCrowdfundingContract(cfContract);
+      let creatorAddress = gelatoSmartWallet.getAddress();
+      if (ethers.utils.isAddress(creatorAddress)) {
+        const campaigns = await cfContract.getCampaignsByCreator(
+          creatorAddress
+        );
+        const balance = await cfContract.getDepositorBalance(creatorAddress);
+        console.log(ethers.utils.formatEther(balance).toString());
+        setCampaigns(campaigns);
+        setBalance(ethers.utils.formatEther(balance).toString());
+      } else {
+        setCampaigns([]);
+      }
+    };
+    init();
+  }, [web3AuthProvider]);
+
+  const login = async () => {
+    if (!gelatoLogin) {
+      return;
+    }
+    const web3authProvider = await gelatoLogin.login();
+    setWeb3AuthProvider(web3authProvider as any);
+  };
+
+  const logout = async () => {
+    if (!gelatoLogin) {
+      return;
+    }
+    await gelatoLogin.logout();
+    setWeb3AuthProvider(null);
+    setWallet(null);
+    setUser(null);
+    setSmartWallet(null);
+    setCrowdfundingContract(null);
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-full sm:before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full sm:after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore starter templates for Next.js.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{" "}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50 text-balance`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    <>
+      <web3AuthProviderContext.Provider value={web3AuthProvider}>
+        <smartWalletContext.Provider value={smartWallet}>
+          <Home
+            login={login}
+            logout={logout}
+            createCampaign={createCampaign}
+            campaigns={campaigns}
+            withdrawFromCampaign={withdrawFromCampaign}
+            depositFunds={depositFunds}
+            balance={balance}
+          />
+          <Footer />
+        </smartWalletContext.Provider>
+      </web3AuthProviderContext.Provider>
+    </>
   );
 }
+
+export default App;
