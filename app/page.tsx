@@ -242,8 +242,8 @@ function App() {
 
   return (
     <>
-      <web3AuthProviderContext.Provider value={web3AuthProvider}>
-        <smartWalletContext.Provider value={smartWallet}>
+      <web3AuthProviderContext.Provider value={web3AuthProvider as any}>
+        <smartWalletContext.Provider value={smartWallet as any}>
           <Home
             login={login}
             logout={logout}
