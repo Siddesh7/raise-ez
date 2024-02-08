@@ -16,13 +16,13 @@ const postUrl = `${process.env.NEXT_PUBLIC_HOST}/api/code`;
 export async function POST(req: NextRequest) {
   const searchParams = req.nextUrl.searchParams;
   const id = searchParams.get("id") ?? "";
-  const res = await getCampaign(id);
+  const res: any = await getCampaign(id);
   console.log(res);
   let imageURL = "";
   if (res) {
-    let goal = res.goal.toString();
+    let goal = res?.goal?.toString();
     let p;
-    let fundsRaised = res.fundsRaised?.toString();
+    let fundsRaised = res?.fundsRaised?.toString();
     console.log("fundsRaised", fundsRaised);
     console.log("goal", goal);
     p = (Number(fundsRaised) / Number(goal)) * 100;

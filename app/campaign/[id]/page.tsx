@@ -8,7 +8,7 @@ type Props = {
 export async function generateMetadata({params}: Props): Promise<Metadata> {
   const id = params.id;
 
-  const res = await getCampaign(id);
+  const res: any = await getCampaign(id);
   console.log(res);
   let imageURL = "";
   if (res) {
