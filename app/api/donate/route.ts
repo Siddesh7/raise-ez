@@ -86,9 +86,7 @@ export async function POST(req: NextRequest) {
           <meta name="fc:frame" content="vNext" />
           <meta name="fc:frame:post_url" content="${postUrl}" />
           <meta name="fc:frame:image" content="${imageURL}" />
-          <meta name="fc:frame:button:1" content="FH on X" />
-          <meta name="fc:frame:button:1:action" content="link" />
-          <meta name="fc:frame:button:1:target" content="https://twitter.com/founderhouse_" />
+
           <meta name="fc:frame:button:2" content="Deposit Funds" />
           <meta name="fc:frame:button:2:action" content="link" />
           <meta name="fc:frame:button:2:target" content="https://t.me/+ULHESQjzIbI2MjQ1" />
