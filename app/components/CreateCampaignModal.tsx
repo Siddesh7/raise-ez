@@ -15,7 +15,7 @@ const CreateCampaignModal: React.FC<CreateCampaignModalProps> = ({
   createCampaign,
 }) => {
   const [open, setOpen] = useState(false);
-  const smartWallet = useContext(smartWalletContext);
+  const smartWallet: any = useContext(smartWalletContext);
 
   const address = smartWallet?.getAddress();
   const [form, setForm] = useState({

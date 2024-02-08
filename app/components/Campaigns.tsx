@@ -12,7 +12,7 @@ const Campaigns: React.FC<CampaignsProps> = ({
   withdrawFromCampaign,
   depositFunds,
 }) => {
-  const smartWallet = useContext(smartWalletContext);
+  const smartWallet: any = useContext(smartWalletContext);
   const [value, setValue] = useState<number>();
 
   return (

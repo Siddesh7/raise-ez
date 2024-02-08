@@ -10,7 +10,7 @@ interface NavbarProps {
 
 const Navbar: React.FC<NavbarProps> = ({login, logout, balance}) => {
   const web3AuthProvider = useContext(web3AuthProviderContext);
-  const smartWallet = useContext(smartWalletContext);
+  const smartWallet: any = useContext(smartWalletContext);
   console.log(balance);
   return (
     <div className="navbar bg-base-100 px-[40px] my-[20px]">
