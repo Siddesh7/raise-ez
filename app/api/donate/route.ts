@@ -1,10 +1,6 @@
 import {NextRequest, NextResponse} from "next/server";
 import {getSSLHubRpcClient, Message} from "@farcaster/hub-nodejs";
-import {
-  callWriteFunction,
-  getCampaign,
-  transferDonation,
-} from "../../lib/ethersFunction";
+import {getCampaign} from "../../lib/ethersFunction";
 import {CROWDFUNDING_CONTRACT_ABI} from "@/app/constants";
 import {ethers} from "ethers";
 
