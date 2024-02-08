@@ -1,5 +1,5 @@
 import React, {useContext, useState} from "react";
-import {web3AuthProviderContext} from "../page";
+import {web3AuthProviderContext} from "../lib/context";
 import CreateCampaignModal from "./CreateCampaignModal";
 import Campaigns from "./Campaigns";
 import {ethers} from "ethers";

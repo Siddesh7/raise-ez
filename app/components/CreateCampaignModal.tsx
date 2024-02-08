@@ -1,7 +1,7 @@
 "use client";
 import React, {useContext, useState} from "react";
 import parseEther from "../lib/parseEther";
-import {smartWalletContext} from "../page";
+import {smartWalletContext} from "../lib/context";
 
 interface CreateCampaignModalProps {
   createCampaign: (

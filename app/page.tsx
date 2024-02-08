@@ -4,7 +4,7 @@ import {SafeEventEmitterProvider, UserInfo} from "@web3auth/base";
 
 import {ethers} from "ethers";
 import {CROWDFUNDING_CONTRACT_ABI} from "./constants";
-
+import {smartWalletContext, web3AuthProviderContext} from "./lib/context";
 import {
   GaslessOnboarding,
   GaslessWalletConfig,
@@ -15,9 +15,6 @@ import {getChainConfig} from "./lib";
 import Home from "./components/Home";
 import Footer from "./components/Footer";
 import parseEther from "./lib/parseEther";
-
-export const web3AuthProviderContext = createContext("");
-export const smartWalletContext = createContext("");
 
 function App() {
   const {target} = getChainConfig();

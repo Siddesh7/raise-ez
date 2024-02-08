@@ -1,7 +1,7 @@
 import {ethers} from "ethers";
 import React, {useContext, useState} from "react";
 import {getBlockExplorerUrl} from "../lib";
-import {smartWalletContext} from "../page";
+import {smartWalletContext} from "../lib/context";
 interface CampaignsProps {
   campaigns: any;
   withdrawFromCampaign: (campaignId: string) => void;

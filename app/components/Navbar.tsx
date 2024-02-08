@@ -1,5 +1,5 @@
 import React, {useContext} from "react";
-import {smartWalletContext, web3AuthProviderContext} from "../page";
+import {smartWalletContext, web3AuthProviderContext} from "../lib/context";
 import {getBlockExplorerUrl} from "../lib";
 
 interface NavbarProps {
