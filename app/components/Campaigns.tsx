@@ -49,7 +49,7 @@ const Campaigns: React.FC<CampaignsProps> = ({
           <thead>
             <tr>
               <th></th>
-
+              <th>id</th>
               <th>Name</th>
               <th>Description</th>
               <th>Goal</th>
@@ -68,6 +68,7 @@ const Campaigns: React.FC<CampaignsProps> = ({
                       Active
                     </div>
                   </td>
+                  <td>{campaign.id.toString()}</td>
 
                   <td>{campaign.name}</td>
                   <td className="max-w-[25vw] overflow-x-auto">

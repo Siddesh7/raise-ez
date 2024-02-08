@@ -33,7 +33,11 @@ const Hero: React.FC<HeroProps> = ({
             </h1>
             <p className="py-6 text-primary">
               Don&apos;t worry about installing another extension or having to
-              pay for gas
+              pay for gas. Create a campaign, post the link on warpcast
+              <span className="text-success mx-1">
+                https://raise-ez.vercel.app/campaign/campaignId
+              </span>
+              and peace out.
             </p>
             {web3AuthProvider && (
               <div className="flex flex-col gap-4">
