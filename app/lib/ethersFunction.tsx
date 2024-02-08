@@ -23,3 +23,12 @@ export async function getCampaign(id: string) {
   });
   return result;
 }
+export async function checkIfBalanceExists(wallet: string) {
+  const result = await readContract(config, {
+    abi: CROWDFUNDING_CONTRACT_ABI,
+    address: getChainConfig().target as any,
+    functionName: "getDepositorBalance",
+    args: [wallet],
+  });
+  return result;
+}
