@@ -49,32 +49,27 @@ export async function POST(req: NextRequest) {
       method: "GET", // Assuming you are making a GET request
       headers: {
         Accept: "application/json",
-        api_key: "NEYNAR_API_DOCS", // Replace 'NEYNAR_API_DOCS' with your actual API key
+        api_key: "NEYNAR_ONCHAIN_KIT", // Replace 'NEYNAR_API_DOCS' with your actual API key
       },
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log(data);
+        console.log(data.users[0].verifications[0]);
         sender = data.users[0].verifications[0];
-        fetch("https://nn-8kcm.onrender.com/donate", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json", // Indicate that we're sending JSON data
-          },
-          body: JSON.stringify({
-            from: ethers.utils.getAddress(sender),
-            campaignId: id,
-            amount: message,
-          }),
-        })
-          .then((response) => response.json()) // Assuming the server responds with JSON
-          .then((data) => console.log(data))
-          .catch((error) => console.error("Error:", error));
-      })
-      .catch((error) => console.error("Error fetching data:", error));
-    console.log("sender", sender);
-    console.log("id", id);
-    console.log("message", message);
+      });
+    if (sender) {
+      fetch("https://nn-8kcm.onrender.com/donate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json", // Indicate that we're sending JSON data
+        },
+        body: JSON.stringify({
+          from: ethers.utils.getAddress(sender),
+          campaignId: id,
+          amount: message,
+        }),
+      }).catch((error) => console.error("Error:", error));
+    }
 
     return new NextResponse(
       `<!DOCTYPE html>
@@ -86,10 +81,10 @@ export async function POST(req: NextRequest) {
           <meta name="fc:frame" content="vNext" />
           <meta name="fc:frame:post_url" content="${postUrl}" />
           <meta name="fc:frame:image" content="${imageURL}" />
-
-          <meta name="fc:frame:button:2" content="Deposit Funds" />
-          <meta name="fc:frame:button:2:action" content="link" />
-          <meta name="fc:frame:button:2:target" content="https://t.me/+ULHESQjzIbI2MjQ1" />
+          <meta name="fc:frame:button:1" content="Deposit funds" />
+          <meta name="fc:frame:button:1:action" content="link" />
+          <meta name="fc:frame:button:1:target" content="https://raise-ez.vercel.app/" />
+        
         </head>
         <body/>
       </html>`,
