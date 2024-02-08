@@ -1,4 +1,4 @@
-Raise EZ is a gasless crowdfunding platform built to showcase one-click donationk from farcaster. Completely Gasless.
+Raise EZ is a gasless crowdfunding platform built to showcase one-click donation from farcaster. Completely Gasless.
 
 ### User Journey
 1. User can create a campaign, we use Gelato and Safe to gaslessly deploy a Safe Wallet for the user first time.
